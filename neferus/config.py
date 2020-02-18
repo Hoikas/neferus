@@ -36,7 +36,7 @@ _defaults = {
 
     "webhook": {
         "socket": _ConfigItem("tcp", "Socket type to use. Valid options are:\n"
-                                      " - unix: use a UNIX socket for use in a reverse proxy"
+                                      " - unix: use a UNIX socket for use in a reverse proxy\n"
                                       " - tcp: use a TCP socket"),
         "path": _ConfigItem("", "UNIX Socket only: Path to the UNIX socket"),
         "host": _ConfigItem("0.0.0.0", "TCP only: Hostname to bind to"),
