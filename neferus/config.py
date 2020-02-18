@@ -15,6 +15,7 @@
 
 import configparser
 from dataclasses import dataclass
+from pathlib import Path
 
 @dataclass
 class _ConfigItem:
@@ -34,18 +35,19 @@ _defaults = {
     },
 
     "webhook": {
-        "host": _ConfigItem("0.0.0.0"),
-        "port": _ConfigItem("8000"),
-        "secret": _ConfigItem(""),
+        "socket": _ConfigItem("tcp", "Socket type to use. Valid options are:\n"
+                                      " - unix: use a UNIX socket for use in a reverse proxy"
+                                      " - tcp: use a TCP socket"),
+        "path": _ConfigItem("", "UNIX Socket only: Path to the UNIX socket"),
+        "host": _ConfigItem("0.0.0.0", "TCP only: Hostname to bind to"),
+        "port": _ConfigItem("8000", "TCP only: Port to bind to"),
+        "secret": _ConfigItem("", "GitHub Secret used for HMAC validation"),
     }
 }
 
-def _get_bytes(value):
-    return value.encode("ascii")
-    #return bytes.fromhex(value)
-
 _converters = {
-    "bytes": _get_bytes,
+    "bytes": lambda x: x.encode("ascii"),
+    "path": lambda x: Path(x),
 }
 
 _header = """

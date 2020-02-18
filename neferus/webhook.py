@@ -168,10 +168,22 @@ class GitHub:
         self._runner = web.ServerRunner(self._server)
         await self._runner.setup()
 
-        # todo unix socket
-        host = self._cfg.get("webhook", "host")
-        port = self._cfg.getint("webhook", "port")
-        self._site = web.TCPSite(self._runner, host, port)
+        socket_type = self._cfg.get("webhook", "socket").lower()
+        if socket_type == "tcp":
+            host = self._cfg.get("webhook", "host")
+            port = self._cfg.getint("webhook", "port")
+            self._site = web.TCPSite(self._runner, host, port)
+        elif socket_type == "unix":
+            path = self._cfg.getpath("webhook", "path")
+            if path.exists() and path.is_dir():
+                self.logger.warning("Specified a directory instead of a file as the UNIX socket path")
+                path = path.joinpath("neferus.sock")
+            if not path.parent.exists():
+                self.logger.warning("UNIX Socket path appears to be uninitialized.")
+                path.parent.mkdir(parents=True, exist_ok=True)
+            self._site = web.UnixSite(self._runner, str(path))
+        else:
+            raise RuntimeError("Invalid webhook socket type!")
         await self._site.start()
 
     def start(self):
