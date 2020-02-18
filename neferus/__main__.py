@@ -17,6 +17,7 @@ import argparse
 import asyncio
 import logging
 from pathlib import Path
+import signal
 
 import config
 import irc
@@ -47,6 +48,11 @@ def run(args):
     cfg = config.read_config(args.config)
 
     loop = asyncio.get_event_loop()
+    try:
+        loop.add_signal_handler(signal.SIGTERM, loop.stop)
+    except NotImplementedError:
+        # Must be running on Windows...
+        pass
     bot = irc.IRCBot(cfg, eventloop=loop)
     web = webhook.GitHub(cfg, bot, loop)
 
@@ -55,11 +61,23 @@ def run(args):
     try:
         loop.run_forever()
     except KeyboardInterrupt:
+        # This is not an error, just exit nao.
+        pass
+    finally:
         web.stop()
         bot.stop()
+
+        async def _wait_shutdown():
+            # copy all tasks, because we're about to make another one.
+            tasks = list(asyncio.all_tasks())
+            try:
+                await asyncio.wait(tasks, timeout=1.0)
+            except asyncio.TimeoutError:
+                logging.warning("Pending Tasks shutdown timeout! (Who gives a rat's ass?)")
+
+        # Ensure any other pending tasks (eg the IRC client's worker) shuts down.
+        loop.run_until_complete(_wait_shutdown())
         loop.close()
-    finally:
-        loop.stop()
     logging.info("Goodbye.")
 
 
