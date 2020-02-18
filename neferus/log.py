@@ -18,23 +18,32 @@ import logging
 import logging.handlers
 
 _level = None
-_path = None
+_handlers = []
 
 class _Logging(logging.Logger):
     def __init__(self, name):
         super().__init__(name, _level)
-        if _path is None:
-            handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s"))
-        else:
-            handler = logging.handlers.RotatingFileHandler(_path.joinpath(f"{name}.log"))
-            handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s: %(message)s"))
-        self.addHandler(handler)
+        for i in _handlers:
+            self.addHandler(i)
 
 
-def init(level, path):
-    logging.setLoggerClass(_Logging)
-
-    global _level, _path
+def init(level, path=None):
+    global _level, _handler
     _level = level
-    _path = path
+
+    fmt = logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s")
+    if path is not None:
+        if path.exists():
+            path = path.joinpath("neferus.log") if path.is_dir() else path
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        handler = logging.handlers.RotatingFileHandler(path.with_suffix(".log"))
+        handler.setFormatter(fmt)
+        _handlers.append(handler)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(fmt)
+    _handlers.append(handler)
+
+    logging.basicConfig(level=level, handlers=_handlers)
+    logging.setLoggerClass(_Logging)

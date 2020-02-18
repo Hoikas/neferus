@@ -44,7 +44,7 @@ class IRCBot(pydle.MinimalClient):
         await asyncio.gather(*coros)
 
     def start(self):
-        self.logger.info("Starting IRC...")
+        logging.info("Starting IRC...")
 
         host = self._cfg.get("irc", "host")
         port = self._cfg.getint("irc", "port")
@@ -56,7 +56,7 @@ class IRCBot(pydle.MinimalClient):
         self.eventloop.run_until_complete(coro)
 
     async def _stop(self):
-        self.logger.info("Disconnecting from IRC...")
+        logging.info("Disconnecting from IRC...")
         try:
             await asyncio.wait_for(self.quit("hsgNeferus::Neferus()->Shutdown();"), timeout=2.0)
         except asyncio.TimeoutError:

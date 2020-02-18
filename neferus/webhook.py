@@ -175,14 +175,14 @@ class GitHub:
         await self._site.start()
 
     def start(self):
-        self.logger.info("Starting Webhook...")
+        logging.info("Starting Webhook...")
 
         # The main module will ensure that the event loop is run forever. For now, we just
         # want to run long enough to start our site.
         self.eventloop.run_until_complete(self._start())
 
     async def _stop(self):
-        self.logger.info("Shutting down Webhook...")
+        logging.info("Shutting down Webhook...")
 
         await self._site.stop()
         await self._runner.cleanup()

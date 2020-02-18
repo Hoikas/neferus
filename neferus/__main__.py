@@ -15,6 +15,7 @@
 
 import argparse
 import asyncio
+import logging
 from pathlib import Path
 
 import config
@@ -38,8 +39,9 @@ def run(args):
         level = "DEBUG"
     else:
         level = "INFO"
-    # todo: log file output
-    log.init(level, None)
+    logpath = Path(args.log) if args.log else None
+    log.init(level, logpath)
+    logging.info("YEE-HAW!")
 
     # fixme: handle errors
     cfg = config.read_config(args.config)
@@ -58,11 +60,13 @@ def run(args):
         loop.close()
     finally:
         loop.stop()
+    logging.info("Goodbye.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GitHub Webhook Powered IRC Notification Bot")
     parser.add_argument("--config", default="config.ini", type=Path, help="path to configuration file")
+    parser.add_argument("--log", default="", help="path to log file")
 
     log_group = parser.add_mutually_exclusive_group()
     log_group.add_argument("-q", "--quiet", action="store_true", help="log only errors")
