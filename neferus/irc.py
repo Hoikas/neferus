@@ -18,6 +18,7 @@ import codecs
 from collections import Sequence
 import logging
 import pydle
+import sys
 
 class IRCBot(pydle.MinimalClient):
     RECONNECT_ON_ERROR = True
@@ -36,6 +37,19 @@ class IRCBot(pydle.MinimalClient):
         fallback_nicknames.append(codecs.encode(nickname_inverse, "rot13"))
 
         super().__init__(nickname=nickname, fallback_nicknames=fallback_nicknames, **kwargs)
+
+    async def on_ctcp_time(self, by, target, contents):
+        await self.ctcp_reply(by, "TIME", "PEANUT BUTTER JELLY TIME!")
+
+    async def on_ctcp_version(self, by, target, contents):
+        version = f"neferus - "
+        if sys.platform == "win32":
+            info = sys.getwindowsversion()
+            version += f"Windows {info.major} (build {info.build})"
+        else:
+            version += sys.platform
+        version += f" - Python {sys.version}"
+        await self.ctcp_reply(by, "VERSION", version.replace('\n', ''))
 
     async def send_notification(self, notification):
         """Sends a message to all joined channels. Multiple messages may be sent by separating
