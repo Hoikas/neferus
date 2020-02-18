@@ -40,6 +40,14 @@ _defaults = {
     }
 }
 
+def _get_bytes(value):
+    return value.encode("ascii")
+    #return bytes.fromhex(value)
+
+_converters = {
+    "bytes": _get_bytes,
+}
+
 _header = """
 ;    This file is part of neferus
 ;
@@ -70,7 +78,7 @@ def dump_default_config(config_path):
                 fp.write(f"{option_name} = {option_value}\n\n")
 
 def read_config(config_path):
-    parser = configparser.ConfigParser()
+    parser = configparser.ConfigParser(converters=_converters)
     parser.read_dict(_defaults)
     if config_path.is_file():
         parser.read(config_path)

@@ -15,6 +15,8 @@
 
 import asyncio
 from aiohttp import web
+from hashlib import sha1
+import hmac
 import logging
 import random
 
@@ -125,13 +127,18 @@ class GitHub:
             raise web.HTTPBadRequest()
 
         # verify hmac
-        secret = self._cfg.get("webhook", "secret")
-        digest = post.get("X-Hub-Signature")
+        secret = self._cfg.getbytes("webhook", "secret")
+        gh_digest = post.get("X-Hub-Signature")
         if secret:
-            if not digest:
+            if not gh_digest:
                 self.logger.error(f"Missing X-Hub-Signature from {request.remote}")
                 raise web.HTTPForbidden()
-            # ... todo ...
+
+            body = await request.read()
+            my_digest = f"sha1={hmac.digest(secret, body, sha1).hex()}"
+            if not hmac.compare_digest(my_digest, gh_digest):
+                self.logger.error(f"HMAC Digest failed from {request.remote}")
+                raise web.HTTPForbidden()
         elif digest:
             self.logger.error(f"Got X-Hub-Signature from {request.remote} but the secret is not configured!")
 

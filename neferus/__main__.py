@@ -25,6 +25,12 @@ import webhook
 def dumpconfig(args):
     config.dump_default_config(args.config)
 
+def gensecret(args):
+    import secrets
+
+    # This value was suggested by the GitHub documentation. Disclaimer: I am no cryptographer.
+    print(secrets.token_hex(20))
+
 def run(args):
     if args.quiet:
         level = "ERROR"
@@ -63,8 +69,9 @@ if __name__ == "__main__":
     log_group.add_argument("-v", "--verbose", action="store_true", help="log lots of stuff")
     
     sub_parsers = parser.add_subparsers(title="command", dest="command", required=True)
-    dumpconfig_parser = sub_parsers.add_parser("dumpconfig")
-    generate_parser = sub_parsers.add_parser("run")
+    sub_parsers.add_parser("dumpconfig")
+    sub_parsers.add_parser("gensecret")
+    sub_parsers.add_parser("run")
 
     args = parser.parse_args()
     globals()[args.command](args)
