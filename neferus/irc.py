@@ -51,6 +51,11 @@ class IRCBot(pydle.MinimalClient):
         version += f" - Python {sys.version}"
         await self.ctcp_reply(by, "VERSION", version.replace('\n', ''))
 
+    async def on_kick(self, channel, target, by, reason=None):
+        if self.is_same_nick(self.nickname, target):
+            self.logger.error(f"Kicked from {channel} by {by} -- rejoining")
+            await self.join(channel)
+
     async def send_notification(self, notification):
         """Sends a message to all joined channels. Multiple messages may be sent by separating
            them with newlines."""
