@@ -58,7 +58,13 @@ class GitHub:
         await self._irc.send_notification(msg)
 
     async def _handle_ping(self, event):
-        await self._irc.send_notification(f"\x02GitHub\x02 has pinged {event['repository']['full_name']}")
+        if "organization" in event:
+            what = event["organization"]["login"]
+        elif "repository" in event:
+            what = event["repository"]["full_name"]
+        else:
+            what = "?UNKNOWN?"
+        await self._irc.send_notification(f"\x02GitHub\x02 has pinged {what}")
 
     async def _handle_pull_request(self, event):
         act_key = event["action"]
