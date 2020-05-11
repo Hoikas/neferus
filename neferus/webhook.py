@@ -94,7 +94,7 @@ class GitHub:
         sha = lambda x: x[:7]
         num_commits = len(event["commits"])
         commits = "commit" if num_commits == 1 else "commits"
-        push_type = "\x03\x01\x02force-pushed\x0f" if event["forced"] else "pushed"
+        push_type = "\x034\x02force-pushed\x0f" if event["forced"] else "pushed"
         notifications = []
 
         if ref_type in {"heads", "tags"}:
