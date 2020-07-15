@@ -89,33 +89,44 @@ class GitHub:
             _, ref_type, ref_name = event["ref"].split('/')
         except:
             self.logger.warning(f"Weird ass-ref in push event '{event['ref']}'")
-            ref_type, ref_name = None, "<unknown>"
+            ref_type, ref_name = "<unknown>", "<unknown>"
 
+        author = f"\x02{event['sender']['login']}\x02"
         sha = lambda x: x[:7]
         num_commits = len(event["commits"])
         commits = "commit" if num_commits == 1 else "commits"
         push_type = "\x034\x02force-pushed\x0f" if event["forced"] else "pushed"
-        notifications = []
+        ref_msg = f"/{ref_name}" if ref_type in {"heads", "tags"} else ""
+        ref_path = f"{event['repository']['full_name']}{ref_msg}"
 
-        if ref_type in {"heads", "tags"}:
-            ref_msg = f"/{ref_name}"
+        if ref_type == "heads" and not event['deleted']:
+            if num_commits:
+                msg = f"{author} has {push_type} {num_commits} {commits} to {ref_path}: {event['compare']}"
+            else:
+                msg = f"{author} has {push_type} to {ref_path}"
+            notifications = [msg]
+
+            if ref_type == "heads" and num_commits <= _max_commits:
+                for i in range(min(num_commits, _max_commits)):
+                    commit = event["commits"][i]
+                    commit_msg = commit["message"]
+                    newline_idx = commit_msg.find("\n")
+                    if newline_idx != -1:
+                        commit_msg = commit_msg[:newline_idx]
+
+                    notifications.append(f"{commit['author']['name']} {sha(commit['id'])} {commit_msg}")
+
+            await self._irc.send_notification("\n".join(notifications))
+        elif event['deleted']:
+            msg = f"{author} has deleted {ref_path}"
+            await self._irc.send_notification(msg)
+        elif ref_type == "tags":
+            msg = (f"{author} has {push_type} tag {ref_name} to {ref_path}: "
+                   f"{event['repository']['html_url']}/releases/tag/{ref_name}")
+            await self._irc.send_notification(msg)
         else:
-            ref_msg = ""
-        msg = (f"\x02{event['sender']['login']}\x02 has {push_type} {num_commits} {commits} to "
-               f"{event['repository']['full_name']}{ref_msg}: {event['compare']}")
-        notifications.append(msg)
-
-        if ref_type == "heads" and num_commits <= _max_commits:
-            for i in range(min(num_commits, _max_commits)):
-                commit = event["commits"][i]
-                commit_msg = commit["message"]
-                newline_idx = commit_msg.find("\n")
-                if newline_idx != -1:
-                    commit_msg = commit_msg[:newline_idx]
-
-                notifications.append(f"{commit['author']['name']} {sha(commit['id'])} {commit_msg}")
-
-        await self._irc.send_notification("\n".join(notifications))
+            self.logger.warning(f"Unhandled push notification for {event['ref']}")
+            raise web.HTTPNotImplemented()
 
     async def _on_request(self, request):
         if request.method != "POST":
