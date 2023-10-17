@@ -161,7 +161,7 @@ class GitHub:
             if not hmac.compare_digest(my_digest, gh_digest):
                 self.logger.error(f"HMAC Digest failed from {request.remote}")
                 raise web.HTTPForbidden()
-        elif digest:
+        elif gh_digest:
             self.logger.error(f"Got X-Hub-Signature from {request.remote} but the secret is not configured!")
 
         try:
