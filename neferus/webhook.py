@@ -91,6 +91,11 @@ class GitHub:
             self.logger.warning(f"Weird ass-ref in push event '{event['ref']}'")
             ref_type, ref_name = "<unknown>", "<unknown>"
 
+        # The last-successful tag is for our "nightly" release. Don't spam the channel
+        # about that.
+        if ref_type == "tags" and ref_name == "last-successful":
+            return
+
         author = f"\x02{event['sender']['login']}\x02"
         sha = lambda x: x[:7]
         num_commits = len(event["commits"])
