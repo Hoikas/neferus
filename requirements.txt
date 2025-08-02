@@ -1,0 +1,12 @@
+# For some reason, the azure modules fail horribly if this isn't
+# already installed. Fantastic.
+aiohttp
+
+# Azure stuff
+azure-appconfiguration
+azure-functions
+azure-identity
+azure-keyvault
+
+# For irc
+pydle
